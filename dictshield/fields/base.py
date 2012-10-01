@@ -63,7 +63,7 @@ class BaseField(object):
     def __set__(self, instance, value):
         """Descriptor for assigning a value to a field in a document.
         """
-        instance._data[self.field_name] = value
+        instance._data[self.field_name] = self.coerce(value)
 
     def for_python(self, value):
         """Convert a DictShield type into native Python value
@@ -79,6 +79,15 @@ class BaseField(object):
         """Perform validation on a value.
         """
         pass
+
+    def coerce(self, value):
+        """Try to convert a value to a valid field value. Return is not
+        guaranteed to be of correct type for the field so validation
+        must still be performed after calling this method.
+        """
+        if isinstance(value, (list, tuple)) and len(value) == 1:
+            return value[0]
+        return value
 
     def _validate(self, value):
         # check choices
@@ -151,17 +160,19 @@ class UUIDField(BaseField):
         super(UUIDField, self).__init__(**kwargs)
         self.auto_fill = auto_fill
 
-    def __set__(self, instance, value):
+    def coerce(self, value):
         """Convert any text values provided into Python UUID objects and
         auto-populate any empty values should auto_fill be set to True.
         """
+        value = super(UUIDField, self).coerce(value)
+
         if not value and self.auto_fill is True:
             value = uuid.uuid4()
 
         if value and not isinstance(value, uuid.UUID):
             value = uuid.UUID(value)
 
-        instance._data[self.field_name] = value
+        return value
 
     def _jsonschema_type(self):
         return 'string'
@@ -347,11 +358,12 @@ class NumberField(JsonNumberMixin, BaseField):
         self.max_value = max_value
         super(NumberField, self).__init__(**kwargs)
 
-    def __set__(self, instance, value):
+    def coerce(self, value):
+        value = super(NumberField, self).coerce(value)
         if value != None and not isinstance(value, self.number_class):
             if self.number_class:
                 value = self.number_class(value)
-        instance._data[self.field_name] = value    
+        return value
 
     def for_python(self, value):
         return self.number_class(value)
@@ -554,16 +566,16 @@ class DateTimeField(BaseField):
     def _from_jsonschema_formats(self):
         return ['date-time', 'date', 'time']
 
-    def __set__(self, instance, value):
+    def coerce(self, value):
         """If `value` is a string, the string should match iso8601 format.
         `iso8601_to_date` is called for conversion.
 
         A datetime may be used (and is encouraged).
         """
+        value = super(DateTimeField, self).coerce(value)
         if isinstance(value, (str, unicode)):
             value = DateTimeField.iso8601_to_date(value)
-
-        instance._data[self.field_name] = value
+        return value
 
     @classmethod
     def iso8601_to_date(cls, datestring):
