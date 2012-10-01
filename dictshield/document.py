@@ -863,7 +863,14 @@ class SafeableMixin:
                     continue
 
             if field_inspector(k, v):
-                datum = values[k]
+                try:
+                    datum = values[k]
+                except KeyError, e:
+                    if v.required:
+                        error_msg = 'Required field missing'
+                        e = ShieldException(error_msg, k, v)
+                        handle_exception(e)
+                    continue
                 # if datum is None, skip
                 if datum is None:
                     continue
