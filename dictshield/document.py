@@ -297,7 +297,7 @@ class BaseDocument(object):
             except AttributeError:
                 pass
 
-    def validate(self, validate_all=False):
+    def validate(self, validate_all=False, raise_exceptions=True):
         """Ensure that all fields' values are valid and that required fields
         are present.
 
@@ -332,11 +332,16 @@ class BaseDocument(object):
             if err and not validate_all:
                 # NB: raising a ShieldDocException in this case would be more
                 # consistent, but existing code might expect ShieldException
-                raise err
+                if raise_exceptions:
+                    raise err
+                return err
 
         if errs:
-            raise ShieldDocException(self._class_name, errs)
-        return True
+            if raise_exceptions:
+                raise ShieldDocException(self._class_name, errs)
+        if raise_exceptions:
+            return True
+        return errs
 
     @classmethod
     def _get_subclasses(cls):
