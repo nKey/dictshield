@@ -84,6 +84,9 @@ class BaseField(object):
         """Try to convert a value to a valid field value. Return is not
         guaranteed to be of correct type for the field so validation
         must still be performed after calling this method.
+
+        Implementations MUST NOT raise exceptions, and just return the
+        original value if coercion is not possible.
         """
         if isinstance(value, (list, tuple)) and len(value) == 1:
             return value[0]
@@ -170,7 +173,10 @@ class UUIDField(BaseField):
             value = uuid.uuid4()
 
         if value and not isinstance(value, uuid.UUID):
-            value = uuid.UUID(value)
+            try:
+                value = uuid.UUID(value)
+            except:
+                pass
 
         return value
 
@@ -362,7 +368,10 @@ class NumberField(JsonNumberMixin, BaseField):
         value = super(NumberField, self).coerce(value)
         if value != None and not isinstance(value, self.number_class):
             if self.number_class:
-                value = self.number_class(value)
+                try:
+                    value = self.number_class(value)
+                except:
+                    pass
         return value
 
     def for_python(self, value):
@@ -574,7 +583,10 @@ class DateTimeField(BaseField):
         """
         value = super(DateTimeField, self).coerce(value)
         if isinstance(value, (str, unicode)):
-            value = DateTimeField.iso8601_to_date(value)
+            try:
+                value = DateTimeField.iso8601_to_date(value)
+            except:
+                pass
         return value
 
     @classmethod
