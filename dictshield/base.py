@@ -68,6 +68,9 @@ class ShieldDocException(Exception):
         return 'Document had %d errors - %s' % (len(self.error_list),
                 [e.__str__() for e in self.error_list],)
 
+    def __iter__(self):
+        return self.error_list.__iter__()
+
 
 def subclass_exception(name, parents, module):
     return type(name, parents, {'__module__': module})
