@@ -532,6 +532,10 @@ class SHA1Field(BaseField, JsonHashMixin):
 class BooleanField(BaseField):
     """A boolean field type.
     """
+    consts = {
+        'True': True, 'False': False,
+        'Yes': True, 'No': False,
+    }
 
     def _jsonschema_type(self):
         return 'boolean'
@@ -546,6 +550,28 @@ class BooleanField(BaseField):
 
     def for_python(self, value):
         return bool(value)
+
+    def coerce(self, value):
+        """
+        Convert a string to its boolean value.
+
+        >>> map(BooleanField().coerce, ('true', 'False', 'yeS', 'NO', '1', '0'))
+        [True, False, True, False, True, False]
+
+        """
+        value = super(BooleanField, self).coerce(value)
+        if isinstance(value, (str, unicode)):
+            # convert a string to its boolean value
+            try:
+                value = bool(int(value))
+            except:
+                value = self.consts.get(value.title(), False)
+        else:
+            try:
+                value = bool(value)
+            except:
+                pass
+        return value
 
     def validate(self, value):
         if not isinstance(value, bool):
