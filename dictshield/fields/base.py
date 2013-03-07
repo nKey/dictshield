@@ -288,7 +288,8 @@ class URLField(StringField):
         return ['url']
 
     def validate(self, value):
-        if not URLField.URL_REGEX.match(value):
+        if (not isinstance(value, basestring) or
+            not URLField.URL_REGEX.match(value)):
             raise ShieldException('Invalid URL', self.field_name, value)
 
         if self.verify_exists:
