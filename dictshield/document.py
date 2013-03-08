@@ -207,7 +207,9 @@ class TopLevelDocumentMetaclass(DocumentMetaclass):
             id_field = klass._options.id_field
             klass._fields['id'] = id_field(**id_options)
             #klass.id = id_field(**id_options)
-            klass.id = id_field(**id_options)
+            new_id = id_field(field_name='id', **id_options)
+            new_id.owner_document = klass
+            klass.id = new_id
         else:
             id_field = UUIDField
 
